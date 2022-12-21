@@ -8,23 +8,29 @@ var employeeId = [];
 var roleId = [];
 var departmentId = [];
 
+
 async function excecuteChoice(answer) {
+    // View/SELECT queries use .promise so they resolve a console.table before calling mainMenu()
+    // .then keeps the table from being overwritten by the menu
+    const answerArray = answer.menuChoice.split(" ");
     if (answer.menuChoice === 'View All Employees') {
-        db.promise().query('SELECT employee.id, employee.first_name, employee.last_name, role.title, department.name AS department, role.salary, CONCAT(m.first_name, " ", m.last_name) AS Manager FROM employee JOIN role ON employee.role_id = role.id JOIN department ON role.department_id = department.id LEFT JOIN employee m ON employee.manager_id = m.id ORDER BY employee.id')
+        db.promise().query('SELECT employee.id, employee.first_name, employee.last_name, role.title, department.name AS department, role.salary, CONCAT(m.first_name, " ", m.last_name) AS manager FROM employee LEFT JOIN role ON employee.role_id = role.id LEFT JOIN department ON role.department_id = department.id LEFT JOIN employee m ON employee.manager_id = m.id ORDER BY employee.id')
             .then(([results, fields]) => {
                 console.log('\n');
+                console.log(getGraphic(`  ALL EMPLOYEES BY EMPLOYEE ID  `))
                 console.table(results);
                 mainMenu();
             });
     } else if (answer.menuChoice === 'View Employees by Manager') {
-        db.promise().query('SELECT employee.manager_id AS id, CONCAT(m.first_name, " ", m.last_name) AS manager, employee.first_name, employee.last_name, role.title, department.name AS department, role.salary FROM employee JOIN role ON employee.role_id = role.id JOIN department ON role.department_id = department.id JOIN employee m ON employee.manager_id = m.id ORDER BY employee.manager_id')
+        db.promise().query('SELECT employee.manager_id AS id, CONCAT(m.first_name, " ", m.last_name) AS manager, CONCAT(employee.first_name, " ",employee.last_name) AS employees, role.title, department.name AS department, role.salary FROM employee LEFT JOIN role ON employee.role_id = role.id LEFT JOIN department ON role.department_id = department.id JOIN employee m ON employee.manager_id = m.id ORDER BY employee.manager_id')
             .then(([results, fields]) => {
                 console.log('\n');
+                console.log(getGraphic(`  ALL EMPLOYEES WITH A MANAGER  `))
                 console.table(results);
                 mainMenu();
             });
     } else if (answer.menuChoice === 'View Employees by Department') {
-        db.promise().query('SELECT department.id AS id, department.name AS department, employee.first_name, employee.last_name, role.title, role.salary, CONCAT(m.first_name, " ", m.last_name) AS Manager FROM employee JOIN role ON employee.role_id = role.id JOIN department ON role.department_id = department.id LEFT JOIN employee m ON employee.manager_id = m.id ORDER BY department.id')
+        db.promise().query('SELECT department.id AS id, department.name AS department, CONCAT(employee.first_name, " ", employee.last_name) AS employees, role.title, role.salary, CONCAT(m.first_name, " ", m.last_name) AS manager FROM employee JOIN role ON employee.role_id = role.id JOIN department ON role.department_id = department.id LEFT JOIN employee m ON employee.manager_id = m.id ORDER BY department.id')
             .then(([results, fields]) => {
                 console.log('\n');
                 console.table(results);
@@ -34,13 +40,23 @@ async function excecuteChoice(answer) {
         db.promise().query('SELECT role.id, role.title, role.salary, department.name FROM role JOIN department ON role.department_id = department.id ORDER BY role.id')
             .then(([results, fields]) => {
                 console.log('\n');
+                console.log(getGraphic(`  ALL   ROLES   BY   ROLE   ID  `))
                 console.table(results);
                 mainMenu();
             });
     } else if (answer.menuChoice === 'View All Departments') {
-        db.promise().query('SELECT * FROM department ORDER BY department.id')
+        db.promise().query('SELECT id, name AS department_name FROM department ORDER BY department.id')
             .then(([results, fields]) => {
                 console.log('\n');
+                console.log(getGraphic(`ALL DEPARTMENTS BY DEPARTMENT ID`))
+                console.table(results);
+                mainMenu();
+            });
+    } else if (answer.menuChoice === 'View Total Utilized Budget') {
+        db.promise().query('SELECT department.id, department.name AS department, SUM(role.salary) AS salary_total FROM department INNER JOIN role ON department.id = role.department_id JOIN employee ON role.id = employee.role_id GROUP BY department.id, department.name')
+            .then(([results, fields]) => {
+                console.log('\n');
+                console.log(getGraphic(` TOTAL UTILIZED BUDGET BY DEPT. `))
                 console.table(results);
                 mainMenu();
             });
@@ -67,13 +83,10 @@ async function excecuteChoice(answer) {
             db.query('UPDATE employee SET role_id = ? WHERE id = ?', [roleId[roleList.indexOf(answers.roleChoice)], employeeId[employeeList.indexOf(answers.employeeChoice)]], (err, result) => {
                 if (err) {
                     console.log(err);
-                } else {
-                    console.log("Success");
                 }
             })
+            console.log(getGraphic(`   EMPLOYEE   ROLE    UPDATED   `));
         }
-        mainMenu();
-
     } else if (answer.menuChoice === 'Update Employee Manager') {
         const answers = await inquirer
             .prompt([
@@ -87,20 +100,26 @@ async function excecuteChoice(answer) {
                     type: 'list',
                     name: 'managerChoice',
                     message: 'Employee to be Manager:',
-                    choices: employeeList,
+                    choices: [...employeeList, '[NONE]'],
                 }
             ]);
+            var managerparam;
+        if (answers.managerChoice === '[NONE]') {
+            managerparam = null;
+        } else {
+            managerparam = employeeId[employeeList.indexOf(answers.managerChoice)];
+        }
+        console.log(getGraphic(`  EMPLOYEE   MANGER   UPDATED   `));
         console.log(`${answers.employeeChoice}'s Manager is now ${answers.managerChoice}`);
-        db.query('UPDATE employee SET manager_id = ? WHERE id = ?', [employeeId[employeeList.indexOf(answers.managerChoice)], employeeId[employeeList.indexOf(answers.employeeChoice)]], (err, result) => {
+        db.query('UPDATE employee SET manager_id = ? WHERE id = ?', [managerparam, employeeId[employeeList.indexOf(answers.employeeChoice)]], (err, result) => {
             if (err) {
                 console.log(err);
             } else {
                 console.log("Success");
             }
         });
-        mainMenu();
     } else if (answer.menuChoice === 'Add Employee') {
-        // const roleResult = db.query('SELECT role.title FROM role');
+        employeeList.push('[NONE]');
         const answers = await inquirer
             .prompt([
                 {
@@ -111,7 +130,7 @@ async function excecuteChoice(answer) {
                         if (nameInput) {
                             return true;
                         } else {
-                            console.log('  <-- Enter a Valid String.\n');
+                            console.log('  <-- Enter a Valid String.');
                             return false;
 
                         }
@@ -126,7 +145,7 @@ async function excecuteChoice(answer) {
                         if (nameInput) {
                             return true;
                         } else {
-                            console.log('  <-- Enter a Valid String.\n');
+                            console.log('  <-- Enter a Valid String.');
                             return false;
 
                         }
@@ -146,10 +165,15 @@ async function excecuteChoice(answer) {
                     choices: employeeList,
                 }
             ]);
-
+        var managerparam;
+        if (answers.managerChoice === '[NONE]') {
+            managerparam = null;
+        } else {
+            managerparam = employeeId[employeeList.indexOf(answers.managerChoice)];
+        }
+        console.log(getGraphic(` EMPLOYEE  ADDED  TO  DATABASE  `));
         console.log(`${answers.first_name} ${answers.last_name} is now an Employee`);
-        console.log(employeeList, answers.managerChoice, (employeeList.indexOf(answers.managerChoice) + 1))
-        db.query('INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUE (?, ?, ?, ?)', [answers.first_name, answers.last_name, roleId[roleList.indexOf(answers.roleChoice)], employeeId[employeeList.indexOf(answers.managerChoice)]], (err, result) => {
+        db.query('INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUE (?, ?, ?, ?)', [answers.first_name, answers.last_name, roleId[roleList.indexOf(answers.roleChoice)], managerparam], (err, result) => {
             if (err) {
                 console.log(err);
             } else {
@@ -157,7 +181,7 @@ async function excecuteChoice(answer) {
             }
 
         });
-        mainMenu();
+
 
 
 
@@ -175,7 +199,7 @@ async function excecuteChoice(answer) {
                         if (nameInput) {
                             return true;
                         } else {
-                            console.log('  <-- Enter a Valid String.\n');
+                            console.log('  <-- Enter a Valid String.');
                             return false;
 
                         }
@@ -188,7 +212,7 @@ async function excecuteChoice(answer) {
                     message: 'Salary[0--999,999]:',
                     validate: salaryInput => {
                         if (isNaN(salaryInput) || salaryInput === "" || salaryInput < 0 || salaryInput > 999999) {
-                            console.log('  <-- Enter a Valid Number between 0-999999\n');
+                            console.log('  <-- Enter a Valid Number between 0-999999');
                             return false;
                         } else {
                             return true;
@@ -203,6 +227,7 @@ async function excecuteChoice(answer) {
                     choices: departmentList,
                 }
             ]);
+        console.log(getGraphic(`   ROLE   ADDED  TO  DATABASE   `));
         console.log(`${answers.title} is now a Role`);
         await db.promise().query('INSERT INTO role (title, salary, department_id) VALUE (?, ?, ?)', [answers.title, answers.salary, departmentId[departmentList.indexOf(answers.departmentChoice)]], (err, result) => {
             if (err) {
@@ -211,7 +236,7 @@ async function excecuteChoice(answer) {
                 console.log("Success");
             }
 
-        }).then(mainMenu());
+        });
 
     } else if (answer.menuChoice === 'Add Department') {
         // const roleResult = db.query('SELECT role.title FROM role');
@@ -225,14 +250,13 @@ async function excecuteChoice(answer) {
                         if (nameInput) {
                             return true;
                         } else {
-                            console.log('  <-- Enter a Valid String.\n');
+                            console.log('  <-- Enter a Valid String.');
                             return false;
-
                         }
                     }
-
                 }
             ]);
+        console.log(getGraphic(` DEPARTMENT  ADDED TO  DATABASE `));
         console.log(`${answers.name} is now a Department`);
         await db.promise().query('INSERT INTO department (name) VALUE (?)', [answers.name], (err, result) => {
             if (err) {
@@ -240,9 +264,7 @@ async function excecuteChoice(answer) {
             } else {
                 console.log("Success");
             }
-
         });
-
     } else if (answer.menuChoice === 'Delete Department') {
         // const roleResult = db.query('SELECT role.title FROM role');
         const answers = await inquirer
@@ -252,9 +274,9 @@ async function excecuteChoice(answer) {
                     name: 'departmentChoice',
                     message: 'Department to Delete:',
                     choices: departmentList,
-
                 }
             ]);
+        console.log(getGraphic(`    DEPARTMENT     DELETED      `));
         console.log(`${answers.name} had been Deleted`);
         await db.promise().query('DELETE FROM department WHERE id = (?)', [departmentId[departmentList.indexOf(answers.departmentChoice)]], (err, result) => {
             if (err) {
@@ -262,9 +284,7 @@ async function excecuteChoice(answer) {
             } else {
                 console.log("Success");
             }
-
         });
-
     } else if (answer.menuChoice === 'Delete Role') {
         // const roleResult = db.query('SELECT role.title FROM role');
         const answers = await inquirer
@@ -274,9 +294,9 @@ async function excecuteChoice(answer) {
                     name: 'roleChoice',
                     message: 'Role to Delete:',
                     choices: roleList,
-
                 }
             ]);
+        console.log(getGraphic(`       ROLE       DELETED       `));
         console.log(`${answers.name} had been Deleted`);
         await db.promise().query('DELETE FROM role WHERE id = (?)', [roleId[roleList.indexOf(answers.roleChoice)]], (err, result) => {
             if (err) {
@@ -286,7 +306,6 @@ async function excecuteChoice(answer) {
             }
 
         });
-
     } else if (answer.menuChoice === 'Delete Employee') {
         // const roleResult = db.query('SELECT role.title FROM role');
         const answers = await inquirer
@@ -299,6 +318,7 @@ async function excecuteChoice(answer) {
 
                 }
             ]);
+        console.log(getGraphic(`    EMPLOYEE       DELETED      `));
         console.log(`${answers.name} had been Deleted`);
         await db.promise().query('DELETE FROM employee WHERE id = (?)', [employeeId[employeeList.indexOf(answers.employeeChoice)]], (err, result) => {
             if (err) {
@@ -306,11 +326,14 @@ async function excecuteChoice(answer) {
             } else {
                 console.log("Success");
             }
-
         });
-
+    } else {
+        console.log(getGraphic(`  Bye! `));
+        process.exit([1]);
     }
-    mainMenu();
+    if (answerArray[0] != 'View') {
+        mainMenu();
+    }
 }
 async function getEmployeeList() {
     db.promise().query('SELECT CONCAT(employee.first_name, " ", employee.last_name) AS name, id FROM employee ORDER BY id')
@@ -347,29 +370,37 @@ async function mainMenu() {
                 type: 'list',
                 name: 'menuChoice',
                 message: 'Main Menu:',
-                choices: ['View All Employees', 'Add Employee', 'Update Employee Role', 'Update Employee Manager', 'View All Roles', 'Add Role', 'View All Departments', 'Add Department', 'View Employees by Manager', 'View Employees by Department', 'Delete Employee', 'Delete Role', 'Delete Department', 'Quit'],
+                choices: ['View All Employees', 'Add Employee', 'Update Employee Role', 'Update Employee Manager', 'View All Roles', 'Add Role', 'View All Departments', 'Add Department', 'View Employees by Manager', 'View Employees by Department', 'View Total Utilized Budget', 'Delete Employee', 'Delete Role', 'Delete Department', 'Quit'],
             }
         ]);
-    // Update employee managers.
-
-    // View employees by manager.
-
-    // View employees by department.
-
-    // Delete departments, roles, and employees.
-
-    // View the total utilized budget of a department—in other words, the combined salaries of all employees in that department.
-    // console.log('\n');
     await excecuteChoice(answer);
-
-
-    // console.log(answers);
-    // if (answers.menuChoice != 'Quit') {
-    //     await excecuteChoice(answers);
-    //     mainMenu();
-    // }
-
-
 }
 
+const getGraphic = (text) => {
+    if (text === 'Welcome' || text === `  Bye! `) {
+        return `
++--------------------------------+
+| ' .' '. '  . ' .   . .' . '  .'|
+|.   . .(_). .                   |
+|.  . ..  .. .        . .' ' '. .|
+|'  ..  .. ..... .  .. . . . ... |
+|.  . ..'. ..//...  ... '.  '.  .|
+|'...'  ... ////    . .,  ' .. . |
+|..  ' . /////// /  '...    . '. |
+||      ///////\\      . .'. ..  .|
+|/|-.-.-///////  \\--.-^---^- .-^-|
+|---- / /////\/\\\\\--^|.i/| ^)\  /- /|
+|.'--// //\\\\\  \\\|\||/\\|=|/ v /|- /'|
+|, -_ /\/|||||\\...\|)||.)(|o)),-'/:|
++--------------------------------+
+|  EMPLOYEE TRACKER  (${text})   |
++--------------------------------+`;
+    } else {
+        return `+--------------------------------+
+|${text}|
++--------------------------------+`
+    }
+}
+
+console.log(getGraphic('Welcome'));
 mainMenu();
