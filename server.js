@@ -10,6 +10,7 @@ var departmentId = [];
 
 
 async function excecuteChoice(answer) {
+    // function responds to the answer.menuChoice from mainMenu();
     // View/SELECT queries use .promise so they resolve a console.table before calling mainMenu()
     // .then keeps the table from being overwritten by the menu
     const answerArray = answer.menuChoice.split(" ");
@@ -17,7 +18,7 @@ async function excecuteChoice(answer) {
         db.promise().query('SELECT employee.id, employee.first_name, employee.last_name, role.title, department.name AS department, role.salary, CONCAT(m.first_name, " ", m.last_name) AS manager FROM employee LEFT JOIN role ON employee.role_id = role.id LEFT JOIN department ON role.department_id = department.id LEFT JOIN employee m ON employee.manager_id = m.id ORDER BY employee.id')
             .then(([results, fields]) => {
                 console.log('\n');
-                console.log(getGraphic(`  ALL EMPLOYEES BY EMPLOYEE ID  `))
+                console.log(getGraphic(`  ALL EMPLOYEES BY EMPLOYEE ID  `));
                 console.table(results);
                 mainMenu();
             });
@@ -25,7 +26,7 @@ async function excecuteChoice(answer) {
         db.promise().query('SELECT employee.manager_id AS id, CONCAT(m.first_name, " ", m.last_name) AS manager, CONCAT(employee.first_name, " ",employee.last_name) AS employees, role.title, department.name AS department, role.salary FROM employee LEFT JOIN role ON employee.role_id = role.id LEFT JOIN department ON role.department_id = department.id JOIN employee m ON employee.manager_id = m.id ORDER BY employee.manager_id')
             .then(([results, fields]) => {
                 console.log('\n');
-                console.log(getGraphic(`  ALL EMPLOYEES WITH A MANAGER  `))
+                console.log(getGraphic(`  ALL MANAGERS  WITH EMPLOYEES  `));
                 console.table(results);
                 mainMenu();
             });
@@ -33,6 +34,7 @@ async function excecuteChoice(answer) {
         db.promise().query('SELECT department.id AS id, department.name AS department, CONCAT(employee.first_name, " ", employee.last_name) AS employees, role.title, role.salary, CONCAT(m.first_name, " ", m.last_name) AS manager FROM employee JOIN role ON employee.role_id = role.id JOIN department ON role.department_id = department.id LEFT JOIN employee m ON employee.manager_id = m.id ORDER BY department.id')
             .then(([results, fields]) => {
                 console.log('\n');
+                console.log(getGraphic(`  ALL EMPLOYEES  BY DEPARTMENT  `));
                 console.table(results);
                 mainMenu();
             });
@@ -40,7 +42,7 @@ async function excecuteChoice(answer) {
         db.promise().query('SELECT role.id, role.title, role.salary, department.name FROM role JOIN department ON role.department_id = department.id ORDER BY role.id')
             .then(([results, fields]) => {
                 console.log('\n');
-                console.log(getGraphic(`  ALL   ROLES   BY   ROLE   ID  `))
+                console.log(getGraphic(`  ALL   ROLES   BY   ROLE   ID  `));
                 console.table(results);
                 mainMenu();
             });
@@ -48,7 +50,7 @@ async function excecuteChoice(answer) {
         db.promise().query('SELECT id, name AS department_name FROM department ORDER BY department.id')
             .then(([results, fields]) => {
                 console.log('\n');
-                console.log(getGraphic(`ALL DEPARTMENTS BY DEPARTMENT ID`))
+                console.log(getGraphic(`ALL DEPARTMENTS BY DEPARTMENT ID`));
                 console.table(results);
                 mainMenu();
             });
@@ -56,27 +58,26 @@ async function excecuteChoice(answer) {
         db.promise().query('SELECT department.id, department.name AS department, SUM(role.salary) AS salary_total FROM department INNER JOIN role ON department.id = role.department_id JOIN employee ON role.id = employee.role_id GROUP BY department.id, department.name')
             .then(([results, fields]) => {
                 console.log('\n');
-                console.log(getGraphic(` TOTAL UTILIZED BUDGET BY DEPT. `))
+                console.log(getGraphic(` TOTAL UTILIZED BUDGET BY DEPT. `));
                 console.table(results);
                 mainMenu();
             });
+            
     } else if (answer.menuChoice === 'Update Employee Role') {
-        employeeList.push('[BACK]');
-        roleList.push('[CANCEL]');
         const answers = await inquirer
             .prompt([
                 {
                     type: 'list',
                     name: 'employeeChoice',
                     message: 'Employee to UPDATE:',
-                    choices: employeeList,
+                    choices: [...employeeList, '[BACK]'],
                 },
                 {
                     type: 'list',
                     name: 'roleChoice',
                     message: 'Role for UPDATE:',
                     when: (input) => input.employeeChoice != '[BACK]',
-                    choices: roleList,
+                    choices: [...roleList, '[CANCEL]'],
                 }
             ]);
         if (answers.employeeChoice != '[BACK]' && answers.roleChoice != '[CANCEL]') {
@@ -118,6 +119,7 @@ async function excecuteChoice(answer) {
                 console.log("Success");
             }
         });
+    
     } else if (answer.menuChoice === 'Add Employee') {
         employeeList.push('[NONE]');
         const answers = await inquirer
@@ -181,14 +183,7 @@ async function excecuteChoice(answer) {
             }
 
         });
-
-
-
-
     } else if (answer.menuChoice === 'Add Role') {
-        // const roleResult = db.query('SELECT role.title FROM role');
-
-
         const answers = await inquirer
             .prompt([
                 {
@@ -239,7 +234,6 @@ async function excecuteChoice(answer) {
         });
 
     } else if (answer.menuChoice === 'Add Department') {
-        // const roleResult = db.query('SELECT role.title FROM role');
         const answers = await inquirer
             .prompt([
                 {
@@ -266,7 +260,6 @@ async function excecuteChoice(answer) {
             }
         });
     } else if (answer.menuChoice === 'Delete Department') {
-        // const roleResult = db.query('SELECT role.title FROM role');
         const answers = await inquirer
             .prompt([
                 {
@@ -286,7 +279,6 @@ async function excecuteChoice(answer) {
             }
         });
     } else if (answer.menuChoice === 'Delete Role') {
-        // const roleResult = db.query('SELECT role.title FROM role');
         const answers = await inquirer
             .prompt([
                 {
@@ -307,7 +299,6 @@ async function excecuteChoice(answer) {
 
         });
     } else if (answer.menuChoice === 'Delete Employee') {
-        // const roleResult = db.query('SELECT role.title FROM role');
         const answers = await inquirer
             .prompt([
                 {
@@ -335,6 +326,7 @@ async function excecuteChoice(answer) {
         mainMenu();
     }
 }
+//Build a list of employees and thier ID for inquirer answers in executeChoice(choice)
 async function getEmployeeList() {
     db.promise().query('SELECT CONCAT(employee.first_name, " ", employee.last_name) AS name, id FROM employee ORDER BY id')
         .then(async ([results, fields]) => {
@@ -343,6 +335,7 @@ async function getEmployeeList() {
         });
 }
 
+//Build a list of roles and thier ID for inquirer answers in executeChoice(choice)
 async function getRoleList() {
     db.promise().query('SELECT role.title AS title, id FROM role ORDER BY id')
         .then(async ([results2, fields]) => {
@@ -351,6 +344,7 @@ async function getRoleList() {
         });
 }
 
+//Build a list of departments and thier ID for inquirer answers in executeChoice(choice)
 async function getDepartmentList() {
     db.promise().query('SELECT department.name AS name, id FROM department ORDER BY id')
         .then(async ([results3, fields]) => {
@@ -361,6 +355,7 @@ async function getDepartmentList() {
 }
 
 async function mainMenu() {
+    //rebuild all lists to check for changes
     await getEmployeeList();
     await getRoleList();
     await getDepartmentList();

@@ -1,24 +1,56 @@
 # employee_tracker
+## Table of Contents
+- [Description](#description)
+- [User Story](#user-story)
+- [Acceptance Criteria](#acceptance-criteria)
+- [Table of Contents](#table-of-contents)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Tests](#tests)
+- [Questions](#questions)
 
-User Story
 
+## Description
+  
+A node.js application that prompts used from inquirer to a list of commands that access a MYSQL database. The application contains server functions that allow the user to view, update, add, and delete in order to maintain an employee DATABASE with employee, role, and department tables.
+The list of commands include:
+
+- 'View All Employees'
+- 'Add Employee'
+- 'Update Employee Role'
+- 'Update Employee Manager'
+- 'View All Roles'
+- 'Add Role'
+- 'View All Departments'
+- 'Add Department'
+- 'View Employees by Manager'
+- 'View Employees by Department'
+- 'View Total Utilized Budget'
+- 'Delete Employee'
+- 'Delete Role'
+- 'Delete Department'
+
+This application uses jobSite_db.
+
+</br>![Employee_tracker ui](./assets/employee_tracker.png)</br>![SQL DATABASE STRUCTURE](./assets/12-sql-homework-demo-01.png)</br></br></br>[CLICK HERE -- The file showing full functionality of the application](https://youtu.be/oLNy2bzSvqQ)  
+  
+
+
+## User Story
+  
+```
 AS A business owner
 I WANT to be able to view and manage the departments, roles, and employees in my company
 SO THAT I can organize and plan my business
+```
+  
 
-Acceptance Criteria
-
+## Acceptance Criteria
+  
+``` 
 GIVEN a command-line application that accepts user input
 WHEN I start the application
-THEN I am presented with the following options: 
-view all departments, 
-view all roles, 
-view all employees, 
-add a department, 
-add a role, 
-add an employee, 
-and update an employee role
-
+THEN I am presented with the following options: view all departments, view all roles, view all employees, add a department, add a role, add an employee, and update an employee role
 WHEN I choose to view all departments
 THEN I am presented with a formatted table showing department names and department ids
 WHEN I choose to view all roles
@@ -33,49 +65,23 @@ WHEN I choose to add an employee
 THEN I am prompted to enter the employee’s first name, last name, role, and manager, and that employee is added to the database
 WHEN I choose to update an employee role
 THEN I am prompted to select an employee to update and their new role and this information is updated in the database
+```
 
 
+## Installation 
+Run the following commands at the project root directory.</br></br>- `npm i`</br>- Configure the .env file </br>- Run Mysql: SOURCE db/schema.sql, db/seeds.sql
+  
 
-As the image illustrates, your schema should contain the following three tables:
-
-    department
-
-        id: INT PRIMARY KEY
-
-        name: VARCHAR(30) to hold department name
-
-    role
-
-        id: INT PRIMARY KEY
-
-        title: VARCHAR(30) to hold role title
-
-        salary: DECIMAL to hold role salary
-
-        department_id: INT to hold reference to department role belongs to
-
-    employee
-
-        id: INT PRIMARY KEY
-
-        first_name: VARCHAR(30) to hold employee first name
-
-        last_name: VARCHAR(30) to hold employee last name
-
-        role_id: INT to hold reference to employee role
-
-        manager_id: INT to hold reference to another employee that is the manager of the current employee (null if the employee has no manager)
-
-You might want to use a separate file that contains functions for performing specific SQL queries you'll need to use. A constructor function or class could be helpful for organizing these. You might also want to include a seeds.sql file to pre-populate your database, making the development of individual features much easier.
+## Usage 
+This application uses dotenv, which requires mysql log-in information in the .env </br> The schema.sql uses jobSite_db </br>
+Run the following commands at the project root directory</br></br>`node server.js`
 
 
+## Tests
+No tests included.
 
-    Update employee managers.
 
-    View employees by manager.
-
-    View employees by department.
-
-    Delete departments, roles, and employees.
-
-    View the total utilized budget of a department—in other words, the combined salaries of all employees in that department.
+## Questions
+[Nathan Patnaude](mailto:Nathanpatnaude@gmail.com) , [GitHub Account](https://github.com/Nathanpatnaude)<br />
+This Project is on [GitHub](https://github.com/Nathanpatnaude/employee_tracker)
+User Story
