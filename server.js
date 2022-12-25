@@ -62,7 +62,7 @@ async function excecuteChoice(answer) {
                 console.table(results);
                 mainMenu();
             });
-            
+
     } else if (answer.menuChoice === 'Update Employee Role') {
         const answers = await inquirer
             .prompt([
@@ -104,7 +104,7 @@ async function excecuteChoice(answer) {
                     choices: [...employeeList, '[NONE]'],
                 }
             ]);
-            var managerparam;
+        var managerparam;
         if (answers.managerChoice === '[NONE]') {
             managerparam = null;
         } else {
@@ -119,7 +119,7 @@ async function excecuteChoice(answer) {
                 console.log("Success");
             }
         });
-    
+
     } else if (answer.menuChoice === 'Add Employee') {
         employeeList.push('[NONE]');
         const answers = await inquirer
@@ -266,18 +266,20 @@ async function excecuteChoice(answer) {
                     type: 'list',
                     name: 'departmentChoice',
                     message: 'Department to Delete:',
-                    choices: departmentList,
+                    choices: [...departmentList, '[CANCEL]'],
                 }
             ]);
-        console.log(getGraphic(`    DEPARTMENT     DELETED      `));
-        console.log(`${answers.name} had been Deleted`);
-        await db.promise().query('DELETE FROM department WHERE id = (?)', [departmentId[departmentList.indexOf(answers.departmentChoice)]], (err, result) => {
-            if (err) {
-                console.log(err);
-            } else {
-                console.log("Success");
-            }
-        });
+        if (answers.departmentChoice != '[CANCEL]') {
+            console.log(getGraphic(`    DEPARTMENT     DELETED      `));
+            console.log(`${answers.name} had been Deleted`);
+            await db.promise().query('DELETE FROM department WHERE id = (?)', [departmentId[departmentList.indexOf(answers.departmentChoice)]], (err, result) => {
+                if (err) {
+                    console.log(err);
+                } else {
+                    console.log("Success");
+                }
+            });
+        }
     } else if (answer.menuChoice === 'Delete Role') {
         const answers = await inquirer
             .prompt([
@@ -285,19 +287,21 @@ async function excecuteChoice(answer) {
                     type: 'list',
                     name: 'roleChoice',
                     message: 'Role to Delete:',
-                    choices: roleList,
+                    choices: [...roleList, '[CANCEL]'],
                 }
             ]);
-        console.log(getGraphic(`       ROLE       DELETED       `));
-        console.log(`${answers.name} had been Deleted`);
-        await db.promise().query('DELETE FROM role WHERE id = (?)', [roleId[roleList.indexOf(answers.roleChoice)]], (err, result) => {
-            if (err) {
-                console.log(err);
-            } else {
-                console.log("Success");
-            }
+        if (answers.roleChoice != '[CANCEL]') {
+            console.log(getGraphic(`       ROLE       DELETED       `));
+            console.log(`${answers.name} had been Deleted`);
+            await db.promise().query('DELETE FROM role WHERE id = (?)', [roleId[roleList.indexOf(answers.roleChoice)]], (err, result) => {
+                if (err) {
+                    console.log(err);
+                } else {
+                    console.log("Success");
+                }
 
-        });
+            });
+        }
     } else if (answer.menuChoice === 'Delete Employee') {
         const answers = await inquirer
             .prompt([
@@ -305,19 +309,21 @@ async function excecuteChoice(answer) {
                     type: 'list',
                     name: 'employeeChoice',
                     message: 'Employee to Delete:',
-                    choices: employeeList,
+                    choices: [...employeeList, '[CANCEL]'],
 
                 }
             ]);
-        console.log(getGraphic(`    EMPLOYEE       DELETED      `));
-        console.log(`${answers.name} had been Deleted`);
-        await db.promise().query('DELETE FROM employee WHERE id = (?)', [employeeId[employeeList.indexOf(answers.employeeChoice)]], (err, result) => {
-            if (err) {
-                console.log(err);
-            } else {
-                console.log("Success");
-            }
-        });
+        if (answers.employeeChoice != '[CANCEL]') {
+            console.log(getGraphic(`    EMPLOYEE       DELETED      `));
+            console.log(`${answers.name} had been Deleted`);
+            await db.promise().query('DELETE FROM employee WHERE id = (?)', [employeeId[employeeList.indexOf(answers.employeeChoice)]], (err, result) => {
+                if (err) {
+                    console.log(err);
+                } else {
+                    console.log("Success");
+                }
+            });
+        }
     } else {
         console.log(getGraphic(`  Bye! `));
         process.exit([1]);
